@@ -12,8 +12,6 @@ func NewRouter(servise *service.Manager, l logger.Interface) *gin.Engine {
 	userRoutes := newUserRoutes(l, servise)
 	sessionRoutes := newSessionRoutes(l, servise)
 
-	gin.SetMode(gin.DebugMode)
-
 	r := gin.New()
 	r.Use(gin.Recovery())
 

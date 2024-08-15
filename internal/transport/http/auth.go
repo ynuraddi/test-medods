@@ -51,7 +51,7 @@ func (h authRoutes) login(c *gin.Context) {
 
 	user, err := h.userService.GetByID(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
-		c.JSON(http.StatusNoContent, gin.H{"message": "user not found"})
+		c.Status(http.StatusNotFound)
 		return
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -90,10 +90,6 @@ func (h authRoutes) refresh(c *gin.Context) {
 	var req refreshRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if len(req.RefreshToken) == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token is empty"})
 		return
 	}
 	rToken := req.RefreshToken
