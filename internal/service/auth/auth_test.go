@@ -540,6 +540,7 @@ func TestRefreshSession(t *testing.T) {
 				assert.Empty(t, rToken)
 			},
 		},
+		// TODO: test wit ip
 	}
 
 	for _, test := range tc {

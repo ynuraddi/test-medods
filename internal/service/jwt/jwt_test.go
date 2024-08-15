@@ -90,6 +90,16 @@ func TestVerifyToken(t *testing.T) {
 			},
 		},
 		{
+			name: "token is malfored",
+			input: func(t *testing.T) (token string) {
+				return "evenNotToken"
+			},
+			checkResult: func(t *testing.T, token *jwt.Token, payload *model.Payload, err error) {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, jwt.ErrTokenMalformed)
+			},
+		},
+		{
 			name: "token is expired",
 			input: func(t *testing.T) (token string) {
 				df := defaultPayload

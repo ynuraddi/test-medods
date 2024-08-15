@@ -43,7 +43,9 @@ func (s Maker) VerifyToken(tokenString string) (token *jwt.Token, payload *model
 		jwt.WithExpirationRequired(),
 		jwt.WithIssuedAt(),
 	)
-	// do not check error, should return err for outside logic
+	if err != nil {
+		return token, payload, err
+	}
 
 	if payload.UserID <= 0 {
 		return nil, nil,
@@ -54,5 +56,5 @@ func (s Maker) VerifyToken(tokenString string) (token *jwt.Token, payload *model
 			fmt.Errorf("%w: ip is required", jwt.ErrTokenInvalidClaims)
 	}
 
-	return token, payload, err
+	return token, payload, nil
 }
