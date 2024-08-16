@@ -42,7 +42,7 @@ func (h authRoutes) login(c *gin.Context) {
 	stringID := c.Param("user_id")
 	userID, err := strconv.Atoi(stringID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("failed ot convert user_id[%s]: %s", stringID, err.Error())})
+		errorMsg(c, http.StatusBadRequest, fmt.Errorf("failed ot convert user_id[%s]: %s", stringID, err.Error()))
 		return
 	}
 
@@ -54,13 +54,13 @@ func (h authRoutes) login(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	aToken, rToken, err := h.authService.CreateSession(ctx, user.ID, c.ClientIP())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -83,13 +83,13 @@ func (h authRoutes) refresh(c *gin.Context) {
 	aToken := c.GetHeader("Authorization")
 	aToken = strings.TrimPrefix(aToken, "Bearer ")
 	if len(aToken) == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization token is empty"})
+		errorMsg(c, http.StatusUnauthorized, fmt.Errorf("access token is empty"))
 		return
 	}
 
 	var req refreshRequest
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusBadRequest, err)
 		return
 	}
 	rToken := req.RefreshToken
@@ -100,11 +100,12 @@ func (h authRoutes) refresh(c *gin.Context) {
 	aToken, rToken, err := h.authService.RefreshSession(ctx, aToken, rToken)
 	if errors.Is(err, jwt.ErrTokenExpired) ||
 		errors.Is(err, jwt.ErrSignatureInvalid) ||
-		errors.Is(err, jwt.ErrTokenMalformed) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		errors.Is(err, jwt.ErrTokenMalformed) ||
+		errors.Is(err, auth.ErrCompareFailed) {
+		errorMsg(c, http.StatusUnauthorized, err)
 		return
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusInternalServerError, err)
 		return
 	}
 

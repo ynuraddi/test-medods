@@ -1,4 +1,4 @@
 logger:
-  log_level: debug
+  log_level: info
 http:
   port: 8080

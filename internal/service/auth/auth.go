@@ -10,13 +10,19 @@ import (
 	"medods/internal/model"
 	"medods/internal/service/jwt"
 	"medods/internal/service/session"
+	"medods/internal/service/user"
 
 	"medods/pkg/logger"
+	"medods/pkg/smtp"
 	"time"
 
 	gjwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	ErrCompareFailed = fmt.Errorf("failed compare token")
 )
 
 const (
@@ -29,11 +35,13 @@ type Interface interface {
 	RefreshSession(ctx context.Context, aT string, rT string) (aToken string, rToken string, err error)
 }
 
+var _ Interface = (*auth)(nil)
+
 type auth struct {
 	session session.Interface
+	user    user.Interface
 	jwt     jwt.Interface
-
-	// TODO: add notification service
+	smtp    smtp.Interface
 
 	logger   logger.Interface
 	testMode bool
@@ -41,13 +49,17 @@ type auth struct {
 
 func New(
 	sessionService session.Interface,
+	userService user.Interface,
 	jwtMaker jwt.Interface,
+	smtp smtp.Interface,
 	logger logger.Interface,
 	testMode bool,
 ) *auth {
 	return &auth{
 		session: sessionService,
+		user:    userService,
 		jwt:     jwtMaker,
+		smtp:    smtp,
 
 		logger: logger,
 
@@ -119,7 +131,7 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 	}
 	s.logger.Debug("success verified token")
 
-	db, err := s.session.GetByUserID(ctx, payload.UserID)
+	dbSession, err := s.session.GetByUserID(ctx, payload.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		err = fmt.Errorf("session not exists: %w", err)
 		s.logger.Error(err)
@@ -131,34 +143,39 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 	}
 	s.logger.Debug("success got user")
 
-	now := time.Now()
-	iat := payload.IssuedAt.Time
-	rExp := iat.Add(_refreshTokenLifeTime)
-	iatU := iat.Unix()
-	if iatU != db.CreatedAt {
-		err := fmt.Errorf("failed to validate refresh token: invalid iat")
+	if !s.compareHash(dbSession.RTokenHash, rT) {
 		s.logger.Error(err)
-		return "", "", err
-	} else if rExp.Before(now) {
-		err := fmt.Errorf("failed to validate refresh token: %w", gjwt.ErrTokenExpired)
-		s.logger.Error(err)
-		return "", "", err
-	}
-
-	if !s.compareHash(db.RTokenHash, rT) {
-		err := fmt.Errorf("failed to validate refresh token: invalid token")
-		s.logger.Error(err)
-		return "", "", err
-	} else if payload.ID != db.ATokenID {
+		return "", "", ErrCompareFailed
+	} else if payload.ID != dbSession.ATokenID {
 		err := fmt.Errorf("failed to validate access token: invalid jti")
 		s.logger.Error(err)
 		return "", "", err
 	}
 
-	if db.IP != payload.IP {
-		// TODO: notificate user
-		// fmt.Println("IP was hacked*. Home Address is Russia, Moscow, ")
-		s.logger.Warn("login from new IP addess")
+	now := time.Now()
+	iat := payload.IssuedAt.Time
+	rExp := iat.Add(_refreshTokenLifeTime)
+	if iat.Unix() != dbSession.CreatedAt {
+		err := fmt.Errorf("different creation time of access and refresh token: %w", gjwt.ErrTokenExpired)
+		s.logger.Error(err)
+		return "", "", err
+	} else if rExp.Before(now) {
+		err := fmt.Errorf("refresh token: %w", gjwt.ErrTokenExpired)
+		s.logger.Error(err)
+		return "", "", err
+	}
+
+	if dbSession.IP != payload.IP {
+		s.logger.Warn("login from new IP addess: old[%s], new[%s]", dbSession.IP, payload.IP)
+
+		dbUser, err := s.user.GetByID(ctx, payload.UserID)
+		if err != nil {
+			return "", "", err
+		}
+
+		if err := s.smtp.SendLoginFromNewIP(payload.IP, dbUser.Email); err != nil {
+			return "", "", err
+		}
 	}
 
 	return s.CreateSession(ctx, payload.UserID, payload.IP)

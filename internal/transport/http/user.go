@@ -33,7 +33,7 @@ type createUserRequest struct {
 func (h userRoutes) createUser(c *gin.Context) {
 	var req createUserRequest
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h userRoutes) createUser(c *gin.Context) {
 	if err := h.userService.Create(ctx, model.User{
 		Email: req.Email,
 	}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h userRoutes) listUser(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 		return
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errorMsg(c, http.StatusInternalServerError, err)
 		return
 	}
 

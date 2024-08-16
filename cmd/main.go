@@ -10,6 +10,7 @@ import (
 	httpserver "medods/pkg/httpServer"
 	"medods/pkg/logger"
 	"medods/pkg/postgres"
+	"medods/pkg/smtp"
 	"net/http"
 	"os"
 	"os/signal"
@@ -40,7 +41,15 @@ func main() {
 
 	repo := repository.New(pg.Conn)
 
-	service := service.New(config, repo, logger)
+	smtp := smtp.New(&smtp.Config{
+		Host:     config.SMTP.HOST,
+		Port:     config.SMTP.PORT,
+		Username: config.SMTP.USER,
+		Password: config.SMTP.PASS,
+		From:     config.SMTP.FROM,
+	})
+
+	service := service.New(config, repo, smtp, logger)
 
 	router := router.NewRouter(service, logger)
 

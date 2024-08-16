@@ -8,6 +8,7 @@ import (
 	"medods/internal/service/session"
 	"medods/internal/service/user"
 	"medods/pkg/logger"
+	"medods/pkg/smtp"
 )
 
 type Manager struct {
@@ -16,14 +17,15 @@ type Manager struct {
 	Session session.Interface
 }
 
-func New(cfg *config.Config, repo *repository.Manager, l logger.Interface) *Manager {
+func New(cfg *config.Config, repo *repository.Manager, smtp smtp.Interface, l logger.Interface) *Manager {
 	userService := user.New(repo.User, l)
 	sessionService := session.New(repo.Session, l)
 	jwtMaker := jwt.New([]byte(cfg.JWT.SecretKey), l)
-	authService := auth.New(sessionService, jwtMaker, l, false)
+	authService := auth.New(sessionService, userService, jwtMaker, smtp, l, false)
 
 	return &Manager{
-		Auth: authService,
-		User: userService,
+		Auth:    authService,
+		User:    userService,
+		Session: sessionService,
 	}
 }

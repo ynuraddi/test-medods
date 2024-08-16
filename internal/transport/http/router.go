@@ -27,6 +27,8 @@ func NewRouter(servise *service.Manager, l logger.Interface) *gin.Engine {
 
 	session := api.Group("/session")
 	session.GET("/list", sessionRoutes.listSession)
+	// TODO: если успею /:id/update
+	session.POST("/update", sessionRoutes.updateSession)
 
 	return r
 }

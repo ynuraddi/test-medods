@@ -55,10 +55,18 @@ func (l *Logger) Debug(message interface{}, args ...interface{}) {
 }
 
 func (l *Logger) Info(message string, args ...interface{}) {
+	if l.testMode {
+		return
+	}
+
 	l.log(message, args...)
 }
 
 func (l *Logger) Warn(message string, args ...interface{}) {
+	if l.testMode {
+		return
+	}
+
 	l.log(message, args...)
 }
 

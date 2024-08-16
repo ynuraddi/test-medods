@@ -13,6 +13,8 @@ type Interface interface {
 	VerifyToken(tokenString string) (token *jwt.Token, payload *model.Payload, err error)
 }
 
+var _ Interface = (*Maker)(nil)
+
 type Maker struct {
 	sercretKey    []byte
 	signingMethod jwt.SigningMethod

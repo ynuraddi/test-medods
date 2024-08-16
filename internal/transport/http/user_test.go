@@ -63,6 +63,14 @@ func TestUserCreate(t *testing.T) {
 			},
 		},
 		{
+			name:       "error incorrect email field format in request",
+			input:      "incorrect",
+			buildStubs: func() {},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
 			name:  "error unexpected user create",
 			input: defaultEmail,
 			buildStubs: func() {

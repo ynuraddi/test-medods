@@ -7,7 +7,9 @@ import (
 	"medods/internal/model"
 	mock_jwt "medods/internal/service/jwt/mock"
 	mock_session "medods/internal/service/session/mock"
+	mock_user "medods/internal/service/user/mock"
 	"medods/pkg/logger"
+	mock_smtp "medods/pkg/smtp/mock"
 	"reflect"
 	"time"
 
@@ -92,10 +94,12 @@ func TestCreateSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	sessionService := mock_session.NewMockInterface(ctrl)
+	user := mock_user.NewMockInterface(ctrl)
 	jwtMaker := mock_jwt.NewMockInterface(ctrl)
 	logger := logger.New("debug", true)
+	smtp := mock_smtp.NewMockInterface(ctrl)
 
-	auth := New(sessionService, jwtMaker, logger, true)
+	auth := New(sessionService, user, jwtMaker, smtp, logger, true)
 
 	defaultATokenID := auth.generateUUID()            // means than uuid always generate than string when testMode is truw
 	defaultRTokenRandString, err := auth.randString() // like uuid
@@ -319,10 +323,12 @@ func TestRefreshSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	sessionService := mock_session.NewMockInterface(ctrl)
+	userService := mock_user.NewMockInterface(ctrl)
 	jwtMaker := mock_jwt.NewMockInterface(ctrl)
 	logger := logger.New("debug", true)
+	smtpService := mock_smtp.NewMockInterface(ctrl)
 
-	auth := New(sessionService, jwtMaker, logger, true)
+	auth := New(sessionService, userService, jwtMaker, smtpService, logger, true)
 
 	defaultATokenID := auth.generateUUID()
 	defaultRTokenRandString, err := auth.randString()
@@ -330,6 +336,8 @@ func TestRefreshSession(t *testing.T) {
 
 	defaultAToken := "access_token"
 	defaultRToken := "rand_string"
+
+	defaultMail := "mock@gmail.com"
 
 	iat := time.Now().Add(-1 * time.Minute)
 	exp := iat.Add(_accessTokenLifeTime)
@@ -540,7 +548,66 @@ func TestRefreshSession(t *testing.T) {
 				assert.Empty(t, rToken)
 			},
 		},
-		// TODO: test wit ip
+		{
+			name:  "OK login from new ip",
+			input: defaultInput,
+			buildStubs: func() {
+				cpPayload := defaultPayload
+				cpPayload.IP = "other"
+
+				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
+				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
+
+				userService.EXPECT().GetByID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).
+					Return(model.User{ID: cpPayload.UserID, Email: defaultMail}, nil)
+				smtpService.EXPECT().SendLoginFromNewIP(gomock.Eq(cpPayload.IP), gomock.Eq(defaultMail)).Times(1).Return(nil)
+
+				callCreateSession(cpPayload.UserID, cpPayload.IP, defaultATokenID, defaultRTokenRandString)
+			},
+			checkResult: func(t *testing.T, aToken, rToken string, err error) {
+				assert.NoError(t, err)
+				assert.Equal(t, defaultAToken, aToken)
+				assert.Equal(t, defaultRToken, rToken)
+			},
+		},
+		{
+			name:  "error unexpected get user by id",
+			input: defaultInput,
+			buildStubs: func() {
+				cpPayload := defaultPayload
+				cpPayload.IP = "other"
+
+				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
+				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
+
+				userService.EXPECT().GetByID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(model.User{}, unexpectedError)
+			},
+			checkResult: func(t *testing.T, aToken, rToken string, err error) {
+				assert.Error(t, err)
+				assert.Empty(t, aToken)
+				assert.Empty(t, rToken)
+			},
+		},
+		{
+			name:  "error unexpected send email",
+			input: defaultInput,
+			buildStubs: func() {
+				cpPayload := defaultPayload
+				cpPayload.IP = "other"
+
+				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
+				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
+
+				userService.EXPECT().GetByID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).
+					Return(model.User{ID: cpPayload.UserID, Email: defaultMail}, nil)
+				smtpService.EXPECT().SendLoginFromNewIP(gomock.Eq(cpPayload.IP), gomock.Eq(defaultMail)).Times(1).Return(unexpectedError)
+			},
+			checkResult: func(t *testing.T, aToken, rToken string, err error) {
+				assert.Error(t, err)
+				assert.Empty(t, aToken)
+				assert.Empty(t, rToken)
+			},
+		},
 	}
 
 	for _, test := range tc {

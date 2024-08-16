@@ -15,4 +15,4 @@ CREATE TABLE IF NOT EXISTS "sessions" (
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
-INSERT INTO users(email) VALUES('mock@gmail.com');
+INSERT INTO users(email) VALUES('user@gmail.com');

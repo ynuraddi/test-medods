@@ -13,6 +13,8 @@ type Interface interface {
 	List(ctx context.Context) ([]model.User, error)
 }
 
+var _ Interface = (*user)(nil)
+
 type user struct {
 	repo   repository.User
 	logger logger.Interface

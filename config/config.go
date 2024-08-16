@@ -11,8 +11,9 @@ type (
 	Config struct {
 		HTTP `yaml:"http"`
 		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
+		PG
 		JWT
+		SMTP `yaml:"smtp"`
 	}
 
 	JWT struct {
@@ -30,6 +31,14 @@ type (
 	PG struct {
 		DSN          string `env-required:"true" env:"PG_DSN"`
 		MigrationURL string `env-required:"true" env:"PG_MIGRATION_URL"`
+	}
+
+	SMTP struct {
+		HOST string `env:"SMTP_HOST" yaml:"host"`
+		PORT int    `env-required:"true" env:"SMTP_PORT" yaml:"port"`
+		USER string `env:"SMTP_USER" yaml:"user"`
+		PASS string `env:"SMTP_PASS"`
+		FROM string `env-required:"true" env:"SMTP_FROM" yaml:"from_email"`
 	}
 )
 

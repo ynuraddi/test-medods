@@ -14,6 +14,8 @@ type Interface interface {
 	List(ctx context.Context) ([]model.Session, error)
 }
 
+var _ Interface = (*session)(nil)
+
 type session struct {
 	repo   repository.Session
 	logger logger.Interface
