@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/go-mail/mail"
 )
@@ -34,7 +35,7 @@ func (s smtp) SendLoginFromNewIP(ip, to string) error {
 }
 
 func (s smtp) SendMail(subject, body string, to ...string) error {
-	fmt.Printf("from[%s] to[%s] body[%s]\n", s.from, to[0], body)
+	log.Printf("[SENDING MAIL] from[%s] to[%s] body[%s]\n", s.from, to[0], body)
 
 	m := mail.NewMessage()
 	m.SetHeader("From", s.from)

@@ -83,7 +83,7 @@ func (h authRoutes) refresh(c *gin.Context) {
 	aToken := c.GetHeader("Authorization")
 	aToken = strings.TrimPrefix(aToken, "Bearer ")
 	if len(aToken) == 0 {
-		errorMsg(c, http.StatusUnauthorized, fmt.Errorf("access token is empty"))
+		errorMsg(c, http.StatusUnauthorized, fmt.Errorf("authorization token is empty"))
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h authRoutes) refresh(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Copy(), 3*time.Second)
 	defer cancel()
 
-	aToken, rToken, err := h.authService.RefreshSession(ctx, aToken, rToken)
+	aToken, rToken, err := h.authService.RefreshSession(ctx, aToken, rToken, c.ClientIP())
 	if errors.Is(err, jwt.ErrTokenExpired) ||
 		errors.Is(err, jwt.ErrSignatureInvalid) ||
 		errors.Is(err, jwt.ErrTokenMalformed) ||

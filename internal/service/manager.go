@@ -15,6 +15,7 @@ type Manager struct {
 	Auth    auth.Interface
 	User    user.Interface
 	Session session.Interface
+	JWT     jwt.Interface
 }
 
 func New(cfg *config.Config, repo *repository.Manager, smtp smtp.Interface, l logger.Interface) *Manager {
@@ -27,5 +28,6 @@ func New(cfg *config.Config, repo *repository.Manager, smtp smtp.Interface, l lo
 		Auth:    authService,
 		User:    userService,
 		Session: sessionService,
+		JWT:     jwtMaker,
 	}
 }

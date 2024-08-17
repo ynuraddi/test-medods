@@ -117,9 +117,11 @@ func TestCreateSession(t *testing.T) {
 		ip  string
 	}
 
+	defaultIP := "2"
+
 	defaultInput := args{
 		uid: 1,
-		ip:  "2",
+		ip:  defaultIP,
 	}
 
 	tc := []struct {
@@ -153,12 +155,12 @@ func TestCreateSession(t *testing.T) {
 
 				dbSession.ATokenID = defaultATokenID
 				dbSession.RTokenHash = defaultRTokenRandString // use rand_string for compareHash
-				dbSession.IP = "2"                             // check that ip is from input
+				dbSession.IP = defaultIP                       // check that ip is from input
 				dbSession.CreatedAt = 0                        // don't check time
 
 				sessionService.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
-				sessionService.EXPECT().Update(gomock.Any(), sessionMatcher{dbSession, auth.compareHash}).Times(1).
+				sessionService.EXPECT().Update(gomock.Any(), sessionMatcher{dbSession, CompareHash}).Times(1).
 					Return(model.Session{}, nil) // first field is not matter cause we use '_, err'
 			},
 			checkResult: func(t *testing.T, aToken, rToken string, err error) {
@@ -192,10 +194,10 @@ func TestCreateSession(t *testing.T) {
 
 				dbSession.ATokenID = defaultATokenID
 				dbSession.RTokenHash = defaultRTokenRandString // use rand_string for compareHash
-				dbSession.IP = "2"                             // check that ip is from input
+				dbSession.IP = defaultIP                       // check that ip is from input
 				dbSession.CreatedAt = 0                        // don't check time
 
-				sessionService.EXPECT().Update(gomock.Any(), sessionMatcher{dbSession, auth.compareHash}).Times(1).
+				sessionService.EXPECT().Update(gomock.Any(), sessionMatcher{dbSession, CompareHash}).Times(1).
 					Return(model.Session{}, unexpectedError) // return unexpected error
 			},
 			checkResult: func(t *testing.T, aToken, rToken string, err error) {
@@ -222,11 +224,11 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   defaultATokenID,
 					RTokenHash: defaultRTokenRandString,
-					IP:         "2",
+					IP:         defaultIP,
 				}
 
 				sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
-				sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, auth.compareHash}).Times(1).Return(nil)
+				sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, CompareHash}).Times(1).Return(nil)
 			},
 			checkResult: func(t *testing.T, aToken, rToken string, err error) {
 				assert.NoError(t, err)
@@ -251,11 +253,11 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   defaultATokenID,
 					RTokenHash: defaultRTokenRandString,
-					IP:         "2",
+					IP:         defaultIP,
 				}
 
 				sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
-				sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, auth.compareHash}).Times(1).Return(unexpectedError)
+				sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, CompareHash}).Times(1).Return(unexpectedError)
 			},
 			checkResult: func(t *testing.T, aToken, rToken string, err error) {
 				assert.Error(t, err)
@@ -340,13 +342,15 @@ func TestRefreshSession(t *testing.T) {
 	defaultMail := "mock@gmail.com"
 
 	iat := time.Now().Add(-1 * time.Minute)
-	exp := iat.Add(_accessTokenLifeTime)
+	exp := iat.Add(ATokenLifetime)
 
 	unexpectedError := fmt.Errorf("unexpected error")
 
+	defaultIP := "::1"
+
 	defaultPayload := model.Payload{
 		UserID: 1,
-		IP:     "2",
+		IP:     defaultIP,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(iat),
@@ -362,7 +366,7 @@ func TestRefreshSession(t *testing.T) {
 		UserID:     1,
 		ATokenID:   defaultATokenID,
 		RTokenHash: defaultRTokenHash,
-		IP:         "2",
+		IP:         defaultIP,
 		CreatedAt:  iat.Unix(),
 		Version:    1,
 	}
@@ -383,17 +387,19 @@ func TestRefreshSession(t *testing.T) {
 		}
 
 		sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
-		sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, auth.compareHash}).Times(1).Return(nil)
+		sessionService.EXPECT().Create(gomock.Any(), sessionMatcher{checkCreateInput, CompareHash}).Times(1).Return(nil)
 	}
 
 	type args struct {
 		aToken string
 		rToken string
+		ip     string
 	}
 
 	defaultInput := args{
 		aToken: defaultAToken,
 		rToken: defaultRToken,
+		ip:     defaultIP,
 	}
 
 	tc := []struct {
@@ -495,8 +501,8 @@ func TestRefreshSession(t *testing.T) {
 			name:  "error compare refresh token expired",
 			input: defaultInput,
 			buildStubs: func() {
-				iat := time.Now().Add(-_refreshTokenLifeTime).Add(-1 * time.Minute) // iat more than refresh token life
-				accessExp := iat.Add(_accessTokenLifeTime)
+				iat := time.Now().Add(-RTokenLifeTime).Add(-1 * time.Minute) // iat more than refresh token life
+				accessExp := iat.Add(ATokenLifetime)
 
 				cpPayload := defaultPayload
 				cpPayload.IssuedAt = jwt.NewNumericDate(iat)
@@ -521,6 +527,7 @@ func TestRefreshSession(t *testing.T) {
 			input: args{
 				aToken: defaultAToken,
 				rToken: "other",
+				ip:     defaultIP,
 			},
 			buildStubs: func() {
 				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &defaultPayload, nil)
@@ -553,7 +560,7 @@ func TestRefreshSession(t *testing.T) {
 			input: defaultInput,
 			buildStubs: func() {
 				cpPayload := defaultPayload
-				cpPayload.IP = "other"
+				cpPayload.IP = "::2"
 
 				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
 				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
@@ -575,11 +582,9 @@ func TestRefreshSession(t *testing.T) {
 			input: defaultInput,
 			buildStubs: func() {
 				cpPayload := defaultPayload
-				cpPayload.IP = "other"
+				cpPayload.IP = "::2"
 
-				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
-				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
-
+				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil) // note return ip 'other'
 				userService.EXPECT().GetByID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(model.User{}, unexpectedError)
 			},
 			checkResult: func(t *testing.T, aToken, rToken string, err error) {
@@ -593,11 +598,9 @@ func TestRefreshSession(t *testing.T) {
 			input: defaultInput,
 			buildStubs: func() {
 				cpPayload := defaultPayload
-				cpPayload.IP = "other"
+				cpPayload.IP = "::2"
 
-				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil)                       // note return ip 'other'
-				sessionService.EXPECT().GetByUserID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).Return(defaultSession, nil) // note return default ip
-
+				jwtMaker.EXPECT().VerifyToken(gomock.Eq(defaultAToken)).Times(1).Return(nil, &cpPayload, nil) // note return ip 'other'
 				userService.EXPECT().GetByID(gomock.Any(), gomock.Eq(cpPayload.UserID)).Times(1).
 					Return(model.User{ID: cpPayload.UserID, Email: defaultMail}, nil)
 				smtpService.EXPECT().SendLoginFromNewIP(gomock.Eq(cpPayload.IP), gomock.Eq(defaultMail)).Times(1).Return(unexpectedError)
@@ -613,7 +616,7 @@ func TestRefreshSession(t *testing.T) {
 	for _, test := range tc {
 		t.Run(test.name, func(t *testing.T) {
 			test.buildStubs()
-			aT, rT, err := auth.RefreshSession(context.Background(), test.input.aToken, test.input.rToken)
+			aT, rT, err := auth.RefreshSession(context.Background(), test.input.aToken, test.input.rToken, test.input.ip)
 			test.checkResult(t, aT, rT, err)
 		})
 	}

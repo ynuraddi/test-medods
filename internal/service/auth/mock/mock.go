@@ -51,9 +51,9 @@ func (mr *MockInterfaceMockRecorder) CreateSession(ctx, uid, ip interface{}) *go
 }
 
 // RefreshSession mocks base method.
-func (m *MockInterface) RefreshSession(ctx context.Context, aT, rT string) (string, string, error) {
+func (m *MockInterface) RefreshSession(ctx context.Context, aT, rT, ip string) (string, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RefreshSession", ctx, aT, rT)
+	ret := m.ctrl.Call(m, "RefreshSession", ctx, aT, rT, ip)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
@@ -61,7 +61,7 @@ func (m *MockInterface) RefreshSession(ctx context.Context, aT, rT string) (stri
 }
 
 // RefreshSession indicates an expected call of RefreshSession.
-func (mr *MockInterfaceMockRecorder) RefreshSession(ctx, aT, rT interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) RefreshSession(ctx, aT, rT, ip interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshSession", reflect.TypeOf((*MockInterface)(nil).RefreshSession), ctx, aT, rT)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshSession", reflect.TypeOf((*MockInterface)(nil).RefreshSession), ctx, aT, rT, ip)
 }

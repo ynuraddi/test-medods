@@ -11,6 +11,7 @@ import (
 	"medods/internal/service/jwt"
 	"medods/internal/service/session"
 	"medods/internal/service/user"
+	"net"
 
 	"medods/pkg/logger"
 	"medods/pkg/smtp"
@@ -26,13 +27,15 @@ var (
 )
 
 const (
-	_accessTokenLifeTime  = 30 * time.Minute
-	_refreshTokenLifeTime = 30 * 24 * time.Hour
+	// life time of access token
+	ATokenLifetime = 30 * time.Minute
+	// life time of refresh token
+	RTokenLifeTime = 30 * 24 * time.Hour
 )
 
 type Interface interface {
 	CreateSession(ctx context.Context, uid int, ip string) (aToken string, rToken string, err error)
-	RefreshSession(ctx context.Context, aT string, rT string) (aToken string, rToken string, err error)
+	RefreshSession(ctx context.Context, aT, rT, ip string) (aToken string, rToken string, err error)
 }
 
 var _ Interface = (*auth)(nil)
@@ -122,7 +125,7 @@ func (s auth) CreateSession(ctx context.Context, uid int, ip string) (aToken, rT
 	return "", "", err
 }
 
-func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken string, err error) {
+func (s auth) RefreshSession(ctx context.Context, aT, rT, ip string) (aToken, rToken string, err error) {
 	_, payload, err := s.jwt.VerifyToken(aT)
 	if err != nil && !errors.Is(err, gjwt.ErrTokenExpired) {
 		err := fmt.Errorf("failed to verify access token: %w", err)
@@ -130,6 +133,23 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 		return "", "", err
 	}
 	s.logger.Debug("success verified token")
+
+	// dbSession.IP != payload.IP проверял до этого как, задался вопросом что это не имеет смылса только на интеграционных тестах)
+	// перепрочитал и понял что нужно ip непосредственно получать и просто сверять с payload
+	clientIP := net.ParseIP(ip)
+	payloadIP := net.ParseIP(payload.IP)
+	if !payloadIP.Equal(clientIP) {
+		s.logger.Warn("login from new IP addess: old[%s], new[%s]", payload.IP, ip)
+
+		dbUser, err := s.user.GetByID(ctx, payload.UserID)
+		if err != nil {
+			return "", "", err
+		}
+
+		if err := s.smtp.SendLoginFromNewIP(payload.IP, dbUser.Email); err != nil {
+			return "", "", err
+		}
+	}
 
 	dbSession, err := s.session.GetByUserID(ctx, payload.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -143,7 +163,7 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 	}
 	s.logger.Debug("success got user")
 
-	if !s.compareHash(dbSession.RTokenHash, rT) {
+	if !CompareHash(dbSession.RTokenHash, rT) {
 		s.logger.Error(err)
 		return "", "", ErrCompareFailed
 	} else if payload.ID != dbSession.ATokenID {
@@ -154,7 +174,7 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 
 	now := time.Now()
 	iat := payload.IssuedAt.Time
-	rExp := iat.Add(_refreshTokenLifeTime)
+	rExp := iat.Add(RTokenLifeTime)
 	if iat.Unix() != dbSession.CreatedAt {
 		err := fmt.Errorf("different creation time of access and refresh token: %w", gjwt.ErrTokenExpired)
 		s.logger.Error(err)
@@ -163,19 +183,6 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT string) (aToken, rToken
 		err := fmt.Errorf("refresh token: %w", gjwt.ErrTokenExpired)
 		s.logger.Error(err)
 		return "", "", err
-	}
-
-	if dbSession.IP != payload.IP {
-		s.logger.Warn("login from new IP addess: old[%s], new[%s]", dbSession.IP, payload.IP)
-
-		dbUser, err := s.user.GetByID(ctx, payload.UserID)
-		if err != nil {
-			return "", "", err
-		}
-
-		if err := s.smtp.SendLoginFromNewIP(payload.IP, dbUser.Email); err != nil {
-			return "", "", err
-		}
 	}
 
 	return s.CreateSession(ctx, payload.UserID, payload.IP)
@@ -189,7 +196,7 @@ func (s auth) createTokens(uid int, ip string, iat time.Time, jti string) (aToke
 		RegisteredClaims: gjwt.RegisteredClaims{
 			ID:        jti,
 			IssuedAt:  gjwt.NewNumericDate(iat),
-			ExpiresAt: gjwt.NewNumericDate(iat.Add(_accessTokenLifeTime)),
+			ExpiresAt: gjwt.NewNumericDate(iat.Add(ATokenLifetime)),
 		},
 	})
 	if err != nil {
@@ -233,6 +240,6 @@ func (s auth) hashString(str string) (string, error) {
 	return string(hashedtoken), nil
 }
 
-func (s auth) compareHash(hash, plain string) bool {
+func CompareHash(hash, plain string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(plain)) == nil
 }

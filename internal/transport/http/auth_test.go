@@ -164,7 +164,7 @@ func TestAuthRefresh(t *testing.T) {
 				rToken: defaultRToken,
 			},
 			buildStubs: func() {
-				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken)).Times(1).Return(defaultAToken, defaultRToken, nil)
+				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken), gomock.Any()).Times(1).Return(defaultAToken, defaultRToken, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				j, err := json.Marshal(refreshResponse{
@@ -212,7 +212,7 @@ func TestAuthRefresh(t *testing.T) {
 				rToken: defaultRToken,
 			},
 			buildStubs: func() {
-				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken)).Times(1).Return("", "", jwt.ErrTokenExpired)
+				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken), gomock.Any()).Times(1).Return("", "", jwt.ErrTokenExpired)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -225,7 +225,7 @@ func TestAuthRefresh(t *testing.T) {
 				rToken: defaultRToken,
 			},
 			buildStubs: func() {
-				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken)).Times(1).Return("", "", jwt.ErrSignatureInvalid)
+				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken), gomock.Any()).Times(1).Return("", "", jwt.ErrSignatureInvalid)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -238,7 +238,7 @@ func TestAuthRefresh(t *testing.T) {
 				rToken: defaultRToken,
 			},
 			buildStubs: func() {
-				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken)).Times(1).Return("", "", jwt.ErrTokenMalformed)
+				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken), gomock.Any()).Times(1).Return("", "", jwt.ErrTokenMalformed)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -251,7 +251,7 @@ func TestAuthRefresh(t *testing.T) {
 				rToken: defaultRToken,
 			},
 			buildStubs: func() {
-				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken)).Times(1).Return("", "", unexpectedError)
+				authService.EXPECT().RefreshSession(gomock.Any(), gomock.Eq(defaultAToken), gomock.Eq(defaultRToken), gomock.Any()).Times(1).Return("", "", unexpectedError)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusInternalServerError, recorder.Code)
