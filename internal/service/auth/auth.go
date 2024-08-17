@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	ErrCompareFailed = fmt.Errorf("failed compare token")
+	ErrValidationFailed = fmt.Errorf("fail to validate token")
 )
 
 const (
@@ -163,9 +163,9 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT, ip string) (aToken, rT
 
 	if !CompareHash(dbSession.RTokenHash, rT) {
 		s.logger.Error(err)
-		return "", "", ErrCompareFailed
+		return "", "", ErrValidationFailed
 	} else if payload.ID != dbSession.ATokenID {
-		err := fmt.Errorf("failed to validate access token: invalid jti")
+		err := fmt.Errorf("%w: invalid jti", ErrValidationFailed)
 		s.logger.Error(err)
 		return "", "", err
 	}

@@ -38,6 +38,18 @@ type loginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// CreateSession godoc
+//
+//	@Summary		Create session
+//	@Description	Create session and return new pair access and refresh tokens.
+//	@Tags			auth
+//	@Produce		json
+//	@Param			user_id	path	int	true	"user id"
+//	@Success		201
+//	@Failure		400	{object}	errMsg	"Invalid request parameters"
+//	@Failure		404	{object}	errMsg	"User not found"
+//	@Failure		500	{object}	errMsg	"Internal server error"
+//	@Router			/auth/login/{user_id} [get]
 func (h authRoutes) login(c *gin.Context) {
 	stringID := c.Param("user_id")
 	userID, err := strconv.Atoi(stringID)
@@ -79,7 +91,22 @@ type refreshResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// RefreshSession godoc
+//
+//	@Summary		Refresh session
+//	@Description	Refresh session and return new pair access and refresh tokens.
+//	@Security		BearerAuth
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			refresh_token	body	refreshRequest	true	"refresh token for refresh session"
+//	@Success		200
+//	@Failure		400	{object}	errMsg	"Invalid request parameters"
+//	@Failure		401	{object}	errMsg	"Unauthorized - invalid tokens"
+//	@Failure		500	{object}	errMsg	"Internal server error"
+//	@Router			/auth/refresh [post]
 func (h authRoutes) refresh(c *gin.Context) {
+	// не сдела middleware потому что подумал что тут логично пропускать даже expire aToken
 	aToken := c.GetHeader("Authorization")
 	aToken = strings.TrimPrefix(aToken, "Bearer ")
 	if len(aToken) == 0 {
@@ -101,7 +128,7 @@ func (h authRoutes) refresh(c *gin.Context) {
 	if errors.Is(err, jwt.ErrTokenExpired) ||
 		errors.Is(err, jwt.ErrSignatureInvalid) ||
 		errors.Is(err, jwt.ErrTokenMalformed) ||
-		errors.Is(err, auth.ErrCompareFailed) {
+		errors.Is(err, auth.ErrValidationFailed) {
 		errorMsg(c, http.StatusUnauthorized, err)
 		return
 	} else if err != nil {

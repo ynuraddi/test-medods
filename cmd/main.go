@@ -18,6 +18,16 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 )
 
+//	@contact.url	https://t.me/pelmenstruation
+//	@contact.email	definston@gmail.com
+
+//	@title						Medods test assignment, by @ynuraddi
+//	@version					1.0
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+
+// @BasePath	/api/v1
 func main() {
 	config, err := config.MustLoad()
 	if err != nil {

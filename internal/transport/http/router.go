@@ -4,6 +4,11 @@ import (
 	"medods/internal/service"
 	"medods/pkg/logger"
 
+	_ "medods/docs"
+
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,8 +32,9 @@ func NewRouter(servise *service.Manager, l logger.Interface) *gin.Engine {
 
 	session := api.Group("/session")
 	session.GET("/list", sessionRoutes.listSession)
-	// TODO: если успею /:id/update
+	// вообще по хорошему /:id/update но ручка просто для теста
 	session.POST("/update", sessionRoutes.updateSession)
 
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	return r
 }

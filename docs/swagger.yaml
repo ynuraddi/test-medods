@@ -1,0 +1,208 @@
+basePath: /api/v1
+definitions:
+  http.createUserRequest:
+    properties:
+      email:
+        example: mock@gmail.com
+        type: string
+    required:
+    - email
+    type: object
+  http.errMsg:
+    properties:
+      error:
+        type: string
+    type: object
+  http.refreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  http.updateSessionRequest:
+    properties:
+      access_token_id:
+        type: string
+      created_at:
+        type: integer
+      id:
+        type: integer
+      ip:
+        type: string
+      refresh_token_hash:
+        type: string
+      user_id:
+        type: integer
+      version:
+        type: integer
+    required:
+    - id
+    type: object
+info:
+  contact:
+    email: definston@gmail.com
+    url: https://t.me/pelmenstruation
+  title: Medods test assignment, by @ynuraddi
+  version: "1.0"
+paths:
+  /auth/login/{user_id}:
+    get:
+      description: Create session and return new pair access and refresh tokens.
+      parameters:
+      - description: user id
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      summary: Create session
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh session and return new pair access and refresh tokens.
+      parameters:
+      - description: refresh token for refresh session
+        in: body
+        name: refresh_token
+        required: true
+        schema:
+          $ref: '#/definitions/http.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "401":
+          description: Unauthorized - invalid tokens
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      security:
+      - BearerAuth: []
+      summary: Refresh session
+      tags:
+      - auth
+  /session/list:
+    get:
+      description: Show rows of session table from database.
+      responses:
+        "200":
+          description: OK
+        "204":
+          description: No Content
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      summary: List session
+      tags:
+      - test
+  /session/update:
+    post:
+      consumes:
+      - application/json
+      description: Update session in database. Needed for testing.
+      parameters:
+      - description: update session request, find session by id and version and update
+        in: body
+        name: update_request
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      summary: Update session
+      tags:
+      - test
+  /user/create:
+    post:
+      consumes:
+      - application/json
+      description: Create user, needed for testing with few users
+      parameters:
+      - description: create user request, email of user
+        format: email
+        in: body
+        name: create_request
+        required: true
+        schema:
+          $ref: '#/definitions/http.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/http.errMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      summary: Create user
+      tags:
+      - test
+  /user/list:
+    get:
+      description: Show rows of users table from database.
+      responses:
+        "200":
+          description: OK
+        "204":
+          description: No Content
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.errMsg'
+      summary: List user
+      tags:
+      - test
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

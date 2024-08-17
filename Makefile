@@ -29,3 +29,7 @@ mockmail:
 
 run_docker:
 	docker-compose build && docker-compose up
+
+swag:
+	swag fmt
+	swag init -g ./cmd/main.go -o docs
