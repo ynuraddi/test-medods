@@ -24,9 +24,8 @@ func TestSessionCreate(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -83,9 +82,8 @@ func TestSessionUpdate(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -144,9 +142,8 @@ func TestUserGetByUserID(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -205,9 +202,8 @@ func TestUserList(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")

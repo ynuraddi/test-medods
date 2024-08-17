@@ -24,9 +24,8 @@ func TestSessionCreate(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -46,7 +45,6 @@ func TestSessionCreate(t *testing.T) {
 					df.UserID,
 					df.ATokenID,
 					df.RTokenHash,
-					df.IP,
 					df.CreatedAt,
 				).WillReturnResult(sqlmock.NewResult(1, 1))
 			},
@@ -63,7 +61,6 @@ func TestSessionCreate(t *testing.T) {
 					df.UserID,
 					df.ATokenID,
 					df.RTokenHash,
-					df.IP,
 					df.CreatedAt,
 				).WillReturnError(unexpectedError)
 			},
@@ -96,9 +93,8 @@ func TestSessionUpdate(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -120,14 +116,12 @@ func TestSessionUpdate(t *testing.T) {
 					df.UserID,
 					df.ATokenID,
 					df.RTokenHash,
-					df.IP,
 					df.CreatedAt,
 				).WillReturnRows(sqlmock.NewRows([]string{
 					"id",
 					"user_id",
 					"access_token_id",
 					"refresh_token_hash",
-					"ip",
 					"created_at",
 					"version",
 				}).AddRow(
@@ -135,7 +129,6 @@ func TestSessionUpdate(t *testing.T) {
 					df.UserID,
 					df.ATokenID,
 					df.RTokenHash,
-					df.IP,
 					df.CreatedAt,
 					df.Version+1,
 				))
@@ -158,7 +151,6 @@ func TestSessionUpdate(t *testing.T) {
 					df.UserID,
 					df.ATokenID,
 					df.RTokenHash,
-					df.IP,
 					df.CreatedAt,
 				).WillReturnError(unexpectedError)
 			},
@@ -191,9 +183,8 @@ func TestSessionGetByUserID(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -209,14 +200,13 @@ func TestSessionGetByUserID(t *testing.T) {
 			input: defaultSession,
 			buildStubs: func() {
 				df := defaultSession
-				mock.ExpectQuery("select id, user_id, access_token_id, refresh_token_hash, ip, created_at, version from sessions").
+				mock.ExpectQuery("select id, user_id, access_token_id, refresh_token_hash, created_at, version from sessions").
 					WithArgs(df.ID).
 					WillReturnRows(sqlmock.NewRows([]string{
 						"id",
 						"user_id",
 						"access_token_id",
 						"refresh_token_hash",
-						"ip",
 						"created_at",
 						"version",
 					}).AddRow(
@@ -224,7 +214,6 @@ func TestSessionGetByUserID(t *testing.T) {
 						df.UserID,
 						df.ATokenID,
 						df.RTokenHash,
-						df.IP,
 						df.CreatedAt,
 						df.Version,
 					))
@@ -240,7 +229,7 @@ func TestSessionGetByUserID(t *testing.T) {
 			input: defaultSession,
 			buildStubs: func() {
 				df := defaultSession
-				mock.ExpectQuery(`select id, user_id, access_token_id, refresh_token_hash, ip, created_at, version from sessions`).
+				mock.ExpectQuery(`select id, user_id, access_token_id, refresh_token_hash, created_at, version from sessions`).
 					WithArgs(df.ID).
 					WillReturnError(unexpectedError)
 			},
@@ -273,9 +262,8 @@ func TestSessionList(t *testing.T) {
 		UserID:     2,
 		ATokenID:   "3",
 		RTokenHash: "4",
-		IP:         "5",
-		CreatedAt:  6,
-		Version:    7,
+		CreatedAt:  5,
+		Version:    6,
 	}
 
 	unexpectedError := fmt.Errorf("unexpected error")
@@ -293,7 +281,7 @@ func TestSessionList(t *testing.T) {
 				df := defaultSession
 				mock.ExpectQuery(`
 					select 
-						id, user_id, access_token_id, refresh_token_hash, ip, created_at, version 
+						id, user_id, access_token_id, refresh_token_hash, created_at, version 
 					from sessions`).
 					WithoutArgs().
 					WillReturnRows(sqlmock.NewRows([]string{
@@ -301,7 +289,6 @@ func TestSessionList(t *testing.T) {
 						"user_id",
 						"access_token_id",
 						"refresh_token_hash",
-						"ip",
 						"created_at",
 						"version",
 					}).AddRows([]driver.Value{
@@ -309,7 +296,6 @@ func TestSessionList(t *testing.T) {
 						df.UserID,
 						df.ATokenID,
 						df.RTokenHash,
-						df.IP,
 						df.CreatedAt,
 						df.Version,
 					}, []driver.Value{
@@ -317,7 +303,6 @@ func TestSessionList(t *testing.T) {
 						df.UserID + 1,
 						df.ATokenID,
 						df.RTokenHash,
-						df.IP,
 						df.CreatedAt,
 						df.Version,
 					}))
@@ -335,7 +320,7 @@ func TestSessionList(t *testing.T) {
 			buildStubs: func() {
 				mock.ExpectQuery(`
 					select 
-						id, user_id, access_token_id, refresh_token_hash, ip, created_at, version 
+						id, user_id, access_token_id, refresh_token_hash, created_at, version 
 					from sessions`).
 					WithoutArgs().
 					WillReturnError(unexpectedError)

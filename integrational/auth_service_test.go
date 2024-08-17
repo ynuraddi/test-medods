@@ -93,7 +93,6 @@ func TestAuth_CreateSession(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, s1.UserID, p1.UserID)
-	assert.Equal(t, s1.IP, p1.IP)
 	assert.Equal(t, s1.ATokenID, p1.ID)
 	assert.Equal(t, s1.CreatedAt, p1.IssuedAt.Time.Unix())
 	assert.True(t, auth.CompareHash(s1.RTokenHash, rT1))
@@ -118,7 +117,6 @@ func TestAuth_CreateSession(t *testing.T) {
 	assert.Equal(t, s1.Version+1, s2.Version)
 	assert.NotEqual(t, s1.ATokenID, s2.ATokenID)
 	assert.NotEqual(t, s1.RTokenHash, s2.RTokenHash)
-	assert.NotEqual(t, s1.IP, s2.IP)
 }
 
 func TestAuth_RefreshSession(t *testing.T) {
@@ -156,7 +154,6 @@ func TestAuth_RefreshSession(t *testing.T) {
 	s2, err := service.Session.GetByUserID(ctx, user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, s1.ID, s2.ID)
-	assert.Equal(t, s1.IP, s2.IP)
 	assert.Equal(t, s1.UserID, s2.UserID)
 	assert.Equal(t, s1.Version+1, s2.Version)
 	assert.NotEqual(t, s1.ATokenID, s2.ATokenID)

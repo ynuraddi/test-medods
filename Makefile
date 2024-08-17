@@ -12,7 +12,7 @@ test:
 	golangci-lint run ./...
 	go test ./... -v -cover
 
-run:
+run_local:
 	go run ./cmd/main.go
 
 mock:
@@ -26,3 +26,6 @@ mock:
 
 mockmail:
 	docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+
+run_docker:
+	docker-compose build && docker-compose up

@@ -22,15 +22,13 @@ func (r Session) Create(ctx context.Context, session model.Session) error {
 		user_id,
 		access_token_id,
 		refresh_token_hash,
-		ip,
 		created_at
-	) values($1, $2, $3, $4, $5)`
+	) values($1, $2, $3, $4)`
 
 	_, err := r.conn.ExecContext(ctx, query,
 		session.UserID,
 		session.ATokenID,
 		session.RTokenHash,
-		session.IP,
 		session.CreatedAt,
 	)
 	return err
@@ -42,8 +40,7 @@ func (r Session) Update(ctx context.Context, session model.Session) (model.Sessi
 		user_id = $3,
 		access_token_id = $4,
 		refresh_token_hash = $5,
-		ip = $6,
-		created_at = $7,
+		created_at = $6,
 		version = version + 1
 	where id = $1 and version = $2
 	returning
@@ -51,7 +48,6 @@ func (r Session) Update(ctx context.Context, session model.Session) (model.Sessi
 		user_id, 
 		access_token_id, 
 		refresh_token_hash, 
-		ip, 
 		created_at,
 		version`
 
@@ -62,14 +58,12 @@ func (r Session) Update(ctx context.Context, session model.Session) (model.Sessi
 		session.UserID,
 		session.ATokenID,
 		session.RTokenHash,
-		session.IP,
 		session.CreatedAt,
 	).Scan(
 		&res.ID,
 		&res.UserID,
 		&res.ATokenID,
 		&res.RTokenHash,
-		&res.IP,
 		&res.CreatedAt,
 		&res.Version,
 	)
@@ -86,7 +80,6 @@ func (r Session) GetByUserID(ctx context.Context, id int) (model.Session, error)
 		user_id,
 		access_token_id,
 		refresh_token_hash,
-		ip,
 		created_at,
 		version
 	from sessions
@@ -98,7 +91,6 @@ func (r Session) GetByUserID(ctx context.Context, id int) (model.Session, error)
 		&res.UserID,
 		&res.ATokenID,
 		&res.RTokenHash,
-		&res.IP,
 		&res.CreatedAt,
 		&res.Version,
 	)
@@ -116,7 +108,6 @@ func (r Session) List(ctx context.Context) ([]model.Session, error) {
 		user_id,
 		access_token_id,
 		refresh_token_hash,
-		ip,
 		created_at,
 		version
 	from sessions`
@@ -135,7 +126,6 @@ func (r Session) List(ctx context.Context) ([]model.Session, error) {
 			&s.UserID,
 			&s.ATokenID,
 			&s.RTokenHash,
-			&s.IP,
 			&s.CreatedAt,
 			&s.Version,
 		); err != nil {

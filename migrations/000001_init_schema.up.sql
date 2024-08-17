@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS "sessions" (
     user_id INT NOT NULL,
     access_token_id VARCHAR NOT NULL,
     refresh_token_hash VARCHAR NOT NULL,
-    ip VARCHAR NOT NULL,
     created_at BIGINT NOT NULL,
     version BIGINT NOT NULL DEFAULT 1,
 

@@ -49,7 +49,6 @@ func (h sessionRoutes) updateSession(c *gin.Context) {
 		UserID:     req.UserID,
 		ATokenID:   req.ATokenID,
 		RTokenHash: req.RTokenHash,
-		IP:         req.IP,
 		CreatedAt:  req.CreatedAT,
 		Version:    req.Version,
 	}

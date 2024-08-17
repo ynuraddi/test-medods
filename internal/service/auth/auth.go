@@ -94,7 +94,6 @@ func (s auth) CreateSession(ctx context.Context, uid int, ip string) (aToken, rT
 			UserID:     uid,
 			ATokenID:   jti,
 			RTokenHash: rTokenHash,
-			IP:         ip,
 			CreatedAt:  iat.Unix(),
 		}); err != nil {
 			s.logger.Error("failed to create session: %s", err.Error())
@@ -111,7 +110,6 @@ func (s auth) CreateSession(ctx context.Context, uid int, ip string) (aToken, rT
 			UserID:     uid,
 			ATokenID:   jti,
 			RTokenHash: rTokenHash,
-			IP:         ip,
 			CreatedAt:  iat.Unix(),
 			Version:    session.Version,
 		}); err != nil {
@@ -134,7 +132,7 @@ func (s auth) RefreshSession(ctx context.Context, aT, rT, ip string) (aToken, rT
 	}
 	s.logger.Debug("success verified token")
 
-	// dbSession.IP != payload.IP проверял до этого как, задался вопросом что это не имеет смылса только на интеграционных тестах)
+	// dbSession.IP != payload.IP проверял до этого так, задался вопросом что это не имеет смылса только на интеграционных тестах)
 	// перепрочитал и понял что нужно ip непосредственно получать и просто сверять с payload
 	clientIP := net.ParseIP(ip)
 	payloadIP := net.ParseIP(payload.IP)

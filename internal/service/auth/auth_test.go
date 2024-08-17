@@ -46,9 +46,6 @@ func (m sessionMatcher) Matches(x interface{}) bool {
 	if m.session.RTokenHash != "" && !m.compareHashFunc(input.RTokenHash, m.session.RTokenHash) {
 		return false
 	}
-	if m.session.IP != "" && m.session.IP != input.IP {
-		return false
-	}
 	if m.session.CreatedAt != 0 && m.session.CreatedAt != input.CreatedAt {
 		return false
 	}
@@ -145,7 +142,6 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   "other",
 					RTokenHash: "other",
-					IP:         "other",
 					CreatedAt:  iat.Unix(),
 					Version:    1,
 				}
@@ -155,7 +151,6 @@ func TestCreateSession(t *testing.T) {
 
 				dbSession.ATokenID = defaultATokenID
 				dbSession.RTokenHash = defaultRTokenRandString // use rand_string for compareHash
-				dbSession.IP = defaultIP                       // check that ip is from input
 				dbSession.CreatedAt = 0                        // don't check time
 
 				sessionService.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
@@ -184,7 +179,6 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   "other",
 					RTokenHash: "other",
-					IP:         "other",
 					CreatedAt:  iat.Unix(),
 					Version:    1,
 				}
@@ -194,7 +188,6 @@ func TestCreateSession(t *testing.T) {
 
 				dbSession.ATokenID = defaultATokenID
 				dbSession.RTokenHash = defaultRTokenRandString // use rand_string for compareHash
-				dbSession.IP = defaultIP                       // check that ip is from input
 				dbSession.CreatedAt = 0                        // don't check time
 
 				sessionService.EXPECT().Update(gomock.Any(), sessionMatcher{dbSession, CompareHash}).Times(1).
@@ -224,7 +217,6 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   defaultATokenID,
 					RTokenHash: defaultRTokenRandString,
-					IP:         defaultIP,
 				}
 
 				sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
@@ -253,7 +245,6 @@ func TestCreateSession(t *testing.T) {
 					UserID:     1,
 					ATokenID:   defaultATokenID,
 					RTokenHash: defaultRTokenRandString,
-					IP:         defaultIP,
 				}
 
 				sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
@@ -366,7 +357,6 @@ func TestRefreshSession(t *testing.T) {
 		UserID:     1,
 		ATokenID:   defaultATokenID,
 		RTokenHash: defaultRTokenHash,
-		IP:         defaultIP,
 		CreatedAt:  iat.Unix(),
 		Version:    1,
 	}
@@ -383,7 +373,6 @@ func TestRefreshSession(t *testing.T) {
 			UserID:     1,
 			ATokenID:   aTID,
 			RTokenHash: rTHash,
-			IP:         ip,
 		}
 
 		sessionService.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
